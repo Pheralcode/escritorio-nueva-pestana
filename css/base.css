@@ -1,0 +1,222 @@
+/* Reset ligero + primitivas compartidas. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden auto;
+}
+
+/* Fondo: degradado por defecto o la foto del usuario. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(1200px 800px at 15% -10%, rgba(var(--accent-rgb), .18), transparent 60%),
+    linear-gradient(160deg, var(--bg-grad-a), var(--bg-grad-b));
+}
+.has-wallpaper body::before,
+html.has-wallpaper body::before {
+  background-image: var(--wallpaper);
+  background-size: cover;
+  background-position: center;
+  filter: blur(var(--wallpaper-blur));
+  transform: scale(1.04); /* evita bordes claros al desenfocar */
+}
+html.has-wallpaper body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(0, 0, 0, var(--wallpaper-dim));
+  pointer-events: none;
+}
+
+h1, h2, h3, h4, p, figure { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+
+.no-select, .no-select * { user-select: none !important; -webkit-user-select: none !important; }
+
+.icon { display: block; flex: none; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background .16s var(--ease), color .16s var(--ease), transform .1s var(--ease);
+}
+.icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+.icon-btn:active { transform: scale(.92); }
+.icon-btn--danger:hover { background: rgba(214, 69, 91, .16); color: var(--danger); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .16s var(--ease), border-color .16s var(--ease), transform .1s var(--ease);
+}
+.btn:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.btn:active { transform: translateY(1px); }
+.btn--primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+.btn--primary:hover { background: var(--accent-strong); }
+.btn--ghost { background: transparent; }
+.btn--danger { color: var(--danger); border-color: rgba(214, 69, 91, .3); }
+.btn--block { width: 100%; justify-content: center; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.field > label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.field--row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/*
+ * Fondo neutro translúcido a propósito: sobre una superficie clara se ve algo
+ * más oscuro y sobre una oscura algo más claro, así que `color: inherit` —el
+ * color de texto de la superficie que lo contiene— siempre contrasta. Con un
+ * fondo fijo pasaba lo contrario: en un widget sobre foto clara el texto se
+ * volvía oscuro y el campo seguía siendo oscuro, y no se leía nada.
+ */
+.input, textarea.input, select.input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--glass-edge-soft);
+  border-radius: 10px;
+  background: rgba(127, 127, 127, .16);
+  color: inherit;
+  outline: none;
+  transition: border-color .16s var(--ease), box-shadow .16s var(--ease), background .16s var(--ease);
+}
+.input::placeholder, textarea.input::placeholder { color: var(--text-faint); }
+.input:focus, textarea.input:focus, select.input:focus {
+  background: rgba(127, 127, 127, .22);
+}
+select.input { appearance: none; -webkit-appearance: none; padding-right: 30px; }
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22);
+}
+
+/* Interruptor */
+.switch {
+  position: relative;
+  width: 40px;
+  height: 23px;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-hover);
+  cursor: pointer;
+  transition: background .18s var(--ease), border-color .18s var(--ease);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform .18s var(--ease), background .18s var(--ease);
+}
+.switch[aria-checked="true"] { background: var(--accent); border-color: transparent; }
+.switch[aria-checked="true"]::after { transform: translateX(17px); background: #fff; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+.range__value { font-variant-numeric: tabular-nums; font-size: 12px; }
+
+.accent-chip { display: inline-flex; align-items: center; gap: 7px; }
+.accent-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12), 0 0 0 3px rgba(var(--accent-rgb), .22);
+}
+.accent-hex { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+
+.accent-manual { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.accent-manual[hidden] { display: none; }
+.accent-picker {
+  width: 46px; height: 34px; padding: 0;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: none; cursor: pointer;
+}
+
+/* Vista previa del reloj dentro de Ajustes: usa los mismos tokens de cristal. */
+.clock-preview {
+  margin: 4px 0 16px;
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+  border-radius: 14px;
+  border: 1px solid var(--glass-edge-soft);
+  background:
+    linear-gradient(180deg,
+      rgba(var(--glass-text-rgb), calc(.30 + .68 * var(--clock-solid))) 0%,
+      rgba(var(--glass-text-rgb), calc(.18 + .48 * var(--clock-solid))) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

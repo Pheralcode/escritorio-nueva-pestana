@@ -1,0 +1,195 @@
+/* Tokens de diseño. El tema se resuelve en [data-resolved-theme] (light|dark),
+   que boot.js fija antes del primer pintado. El acento llega desde theme.js. */
+
+:root {
+  --accent: #6d5efc;
+  --accent-rgb: 109, 94, 252;
+  --accent-strong: #5a4dd0;
+  --accent-soft: #e2dffe;
+  --accent-contrast: #ffffff;
+
+  --radius-sm: 10px;
+  --radius: 20px;
+  --radius-lg: 26px;
+
+  --gap: 16px;
+  --row-h: 110px;
+
+  /* En macOS `-apple-system` resuelve a San Francisco, la tipografía del sistema:
+     mismo tipo que usa Apple en toda su interfaz, sin descargar nada ni tocar la CSP. */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
+          "Segoe UI", Inter, system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+          "Segoe UI Variable Display", system-ui, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .5, 1);
+
+  --wallpaper: none;
+  --wallpaper-dim: .35;
+  --wallpaper-blur: 0px;
+
+  /* Vidrio líquido. `--glass-opacity` es el valor del usuario (0..1); cada tema
+     lo escala a su propio rango porque un 60 % de blanco es sólido sobre fondo
+     claro pero apenas se ve sobre fondo oscuro. */
+  --glass-opacity: .62;
+  --glass-blur: 18px;
+  --glass-sat: 180%;
+  --glass-tint: 255, 255, 255;
+  --glass-alpha: calc(var(--glass-opacity) * .95);
+  --glass-edge: rgba(255, 255, 255, .55);
+  --glass-edge-soft: rgba(255, 255, 255, .18);
+  --glass-sheen: rgba(255, 255, 255, .30);
+
+  /* Cristal aplicado a la propia tipografía del reloj.
+     El relleno es translúcido —eso es lo que deja ver el fondo a través del
+     glifo— pero NO tanto como para que se cuele la sombra por dentro: por
+     debajo de ~.6 la cifra deja de leerse como vidrio y parece un contorno. */
+  --glass-text-rgb: 255, 255, 255;
+  --glass-text-shadow: rgba(0, 0, 0, .32);
+
+  /* Personalización del reloj (Ajustes -> Apariencia -> Reloj). */
+  --clock-font: var(--font-display);
+  --clock-weight: 250;
+  --clock-solid: 1;          /* 1 = relleno sólido, 0 = cristal casi puro */
+}
+
+/* Tema claro */
+:root, :root[data-resolved-theme="light"] {
+  --bg: #f2f3f7;
+  --bg-grad-a: #eef0f8;
+  --bg-grad-b: #f7f7fb;
+  --surface: rgba(var(--glass-tint), var(--glass-alpha));
+  --surface-solid: #ffffff;
+  --surface-hover: rgba(var(--glass-tint), calc(var(--glass-alpha) + .12));
+  --border: rgba(16, 18, 34, .10);
+  --border-strong: rgba(16, 18, 34, .18);
+  --text: #14161f;
+  --text-muted: #3f4453;
+  --text-faint: #6a7083;
+  --glass-text-rgb: 18, 20, 28;
+  --glass-text-shadow: rgba(16, 18, 34, .20);
+  --shadow: 0 1px 2px rgba(16, 18, 34, .06), 0 8px 24px rgba(16, 18, 34, .08);
+  --shadow-lg: 0 12px 48px rgba(16, 18, 34, .18);
+  --overlay: rgba(20, 22, 31, .32);
+  --danger: #d6455b;
+  --ok: #1f9d63;
+
+  /* Paneles flotantes: cristal con cuerpo suficiente para leer encima de
+     cualquier fondo. No dependen del deslizador de opacidad de los widgets. */
+  /* Material de las superficies flotantes. Translúcido y muy desenfocado —se ve
+     el fondo a través— pero con tinte suficiente para que su texto SIEMPRE sea
+     legible sin depender de la foto que haya detrás. */
+  --panel-bg: rgba(252, 252, 255, .62);
+  --panel-border: rgba(255, 255, 255, .65);
+  --panel-blur: 40px;
+  --panel-text: #14161f;
+  --panel-text-muted: rgba(20, 22, 31, .78);
+  --panel-text-faint: rgba(20, 22, 31, .55);
+}
+
+/* Tema oscuro */
+:root[data-resolved-theme="dark"] {
+  --bg: #0c0d12;
+  --bg-grad-a: #11131b;
+  --bg-grad-b: #0a0b10;
+  --glass-alpha: calc(var(--glass-opacity) * .17);
+  --glass-edge: rgba(255, 255, 255, .22);
+  --glass-edge-soft: rgba(255, 255, 255, .07);
+  --glass-sheen: rgba(255, 255, 255, .14);
+  --surface: rgba(var(--glass-tint), var(--glass-alpha));
+  --surface-solid: #171922;
+  --surface-hover: rgba(var(--glass-tint), calc(var(--glass-alpha) + .07));
+  --border: rgba(255, 255, 255, .09);
+  --border-strong: rgba(255, 255, 255, .18);
+  --text: #eef0f6;
+  --text-muted: #c3c9da;
+  --text-faint: #9aa1b6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .38);
+  --shadow-lg: 0 16px 56px rgba(0, 0, 0, .6);
+  --overlay: rgba(4, 5, 9, .55);
+  --danger: #ff6b81;
+  --ok: #3ddc97;
+
+  --panel-bg: rgba(22, 24, 32, .66);
+  --panel-border: rgba(255, 255, 255, .16);
+  --panel-blur: 40px;
+  --panel-text: #f2f4fa;
+  --panel-text-muted: rgba(242, 244, 250, .80);
+  --panel-text-faint: rgba(242, 244, 250, .56);
+}
+
+/* Sobre una foto, el vidrio se apoya en el desenfoque: solo hay que asegurar
+   que el texto siga legible. La opacidad la sigue mandando el usuario. */
+.has-wallpaper {
+  --glass-alpha: calc(var(--glass-opacity) * .38);
+  --border: rgba(255, 255, 255, .26);
+}
+
+/* Las superficies flotantes (menús, ajustes, buscador, galería, avisos) tienen
+   su propio fondo, así que llevan su propio color de texto. Sin esto heredarían
+   el contraste calculado para el wallpaper y se daba el caso de texto negro
+   sobre un panel oscuro —o al revés— según la foto. */
+.ctxmenu,
+.panel,
+.spotlight,
+.gal,
+.hero__panel,
+.minidialog,
+.toast,
+.dock__tip {
+  --text: var(--panel-text);
+  --text-muted: var(--panel-text-muted);
+  --text-faint: var(--panel-text-faint);
+  color: var(--panel-text);
+  text-shadow: none;
+}
+
+/* Contraste automático: `contrast.js` mide la claridad real de la superficie
+   (foto + oscurecido + velo del vidrio) y pone una de estas dos clases. El texto
+   nunca es un gris translúcido; es negro o blanco, con opacidad alta. */
+:root.wp-dark {
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, .94);
+  --text-faint: rgba(255, 255, 255, .80);
+  --border: rgba(255, 255, 255, .28);
+}
+:root.wp-light {
+  --text: #0a0c12;
+  --text-muted: rgba(10, 12, 18, .90);
+  --text-faint: rgba(10, 12, 18, .70);
+  --border: rgba(10, 12, 18, .16);
+}
+:root.wp-light .widget { text-shadow: none; }
+:root.wp-light .appicon__label,
+:root.wp-light .hero__date { text-shadow: 0 1px 2px rgba(255, 255, 255, .45); }
+/* Sombra mínima para despegar el texto de la foto sin ensuciar el diseño. */
+.has-wallpaper .widget { text-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+.has-wallpaper[data-resolved-theme="light"] {
+  --glass-alpha: calc(var(--glass-opacity) * .88);
+}
+.has-wallpaper[data-resolved-theme="light"] .widget { text-shadow: none; }
+
+/* Con foto detrás el cristal de las cifras siempre es claro: la propia imagen
+   es la que da el color que se ve a través de la letra. */
+:root.wp-dark {
+  --glass-text-rgb: 255, 255, 255;
+  --glass-text-shadow: rgba(0, 0, 0, .38);
+}
+
+/* --------------------------------------------------------------------------
+   Cristal del reloj. Va al final a propósito: comparte especificidad con las
+   reglas .wp-* de arriba (ambas son :root + clase) y en un empate manda el
+   orden del documento. El reloj decide por SU franja, no por la media de la
+   foto: puede estar sobre un cielo claro aunque el resto de la imagen sea
+   oscura, y al revés.
+   -------------------------------------------------------------------------- */
+:root.hero-light {
+  --glass-text-rgb: 12, 14, 20;
+  --glass-text-shadow: rgba(16, 18, 34, .22);
+}
+:root.hero-dark {
+  --glass-text-rgb: 255, 255, 255;
+  --glass-text-shadow: rgba(0, 0, 0, .40);
+}

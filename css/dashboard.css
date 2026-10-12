@@ -1,0 +1,586 @@
+/* Layout de la página, grid de widgets y barra superior. */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px clamp(16px, 4vw, 48px) 48px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* -------------------------------- topbar -------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  min-height: 36px;
+}
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text);
+  opacity: .9;
+}
+.topbar__brand img { width: 20px; height: 20px; border-radius: 5px; }
+.topbar__spacer { flex: 1; }
+
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background .16s var(--ease), border-color .16s var(--ease);
+}
+.search-trigger:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.search-trigger kbd {
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: rgba(127, 127, 127, .12);
+}
+
+.topbar .icon-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* --------------------------------- grid --------------------------------- */
+
+.grid {
+  display: grid;
+  /* Columnas finas: un icono de app ocupa 1x1 y sale cuadrado; los widgets
+     normales ocupan 2 o 4 columnas y mantienen sus proporciones. */
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  grid-auto-rows: var(--row-h);
+  grid-auto-flow: row dense;
+  gap: var(--gap);
+  align-content: start;
+  flex: 1;
+}
+
+@media (min-width: 1100px) { .grid { grid-template-columns: repeat(10, 1fr); } }
+@media (min-width: 1400px) { .grid { grid-template-columns: repeat(12, 1fr); } }
+
+.grid-empty[hidden] { display: none; }
+.grid-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* -------------------------------- widget -------------------------------- */
+
+/* --------------------------- vidrio líquido ---------------------------
+   Tres capas para imitar el cristal de Apple:
+   1. `backdrop-filter` con saturación: el fondo se ve a través, más vivo.
+   2. un borde especular interior (claro arriba, tenue abajo) que simula el
+      canto biselado del cristal.
+   3. un brillo diagonal muy suave sobre la mitad superior.
+   La opacidad y el desenfoque salen de --glass-* (Ajustes → Apariencia). */
+.widget {
+  position: relative;
+  grid-column: span var(--w-cols, 4);
+  grid-row: span var(--w-rows, 2);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-edge-soft),
+    var(--shadow);
+  overflow: hidden;
+  transition: box-shadow .2s var(--ease), border-color .2s var(--ease),
+              opacity .14s linear, transform .16s var(--ease);
+}
+/* brillo especular */
+.widget::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(150deg, var(--glass-sheen) 0%, transparent 42%),
+    radial-gradient(120% 70% at 50% -20%, var(--glass-sheen), transparent 60%);
+  opacity: .7;
+  z-index: 0;
+}
+.widget > * { position: relative; z-index: 1; }
+.widget:hover { border-color: var(--border-strong); }
+/* opacidad muy baja: el contorno pasa a ser lo que define la tarjeta */
+.glass-faint .widget { border-color: var(--glass-edge); }
+.glass-faint .widget--bare { border-color: transparent; }
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px 2px 12px;
+  opacity: 0;
+  transition: opacity .18s var(--ease);
+}
+.widget:hover .widget__header,
+.widget:focus-within .widget__header,
+.is-reordering .widget__header { opacity: 1; }
+
+.widget__title {
+  font-size: 12.5px;
+  font-weight: 590;
+  letter-spacing: -.005em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.widget__actions { display: flex; gap: 2px; margin-left: auto; }
+
+.widget__grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;      /* imprescindible para Pointer Events en táctil */
+}
+.widget__grip:hover { background: var(--surface-hover); color: var(--text); }
+.widget__grip:active { cursor: grabbing; }
+
+.widget__body {
+  flex: 1;
+  min-height: 0;
+  padding: 2px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Cuando la cabecera está oculta el contenido no debe bailar: reservamos su alto. */
+.widget:not(.widget--bare) .widget__body { padding-top: 2px; }
+
+.widget__resize {
+  position: absolute;
+  right: 0; bottom: 0;
+  width: 18px; height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity .16s var(--ease);
+}
+.widget__resize::after {
+  content: "";
+  position: absolute;
+  right: 4px; bottom: 4px;
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--text-faint);
+  border-bottom: 2px solid var(--text-faint);
+  border-radius: 0 0 3px 0;
+}
+.widget:hover .widget__resize { opacity: .8; }
+
+/* estados de arrastre */
+.widget.is-dragging {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent);
+  cursor: grabbing;
+  opacity: .96;
+  transition: none;
+}
+.widget--placeholder {
+  border: 2px dashed rgba(var(--accent-rgb), .5);
+  background: rgba(var(--accent-rgb), .07);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  animation: ph-in .18s var(--ease);
+}
+@keyframes ph-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+
+.widget.is-resizing { border-color: var(--accent); box-shadow: var(--shadow-lg); }
+.widget.is-removing { opacity: 0; transform: scale(.96); }
+.widget.just-dropped { animation: drop .3s var(--ease); }
+@keyframes drop {
+  0% { transform: scale(1.03); }
+  60% { transform: scale(.995); }
+  100% { transform: scale(1); }
+}
+.is-reordering .widget:not(.is-dragging) { transition: transform .18s var(--ease); }
+
+.widget-error {
+  padding: 12px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+/* En pantallas estrechas: 4 columnas -> 4 iconos por fila y los widgets
+   normales a ancho completo (igual que la pantalla de inicio de un móvil). */
+@media (max-width: 700px) {
+  .grid { grid-template-columns: repeat(4, 1fr); }
+  .widget[data-size="md"],
+  .widget[data-size="lg"] { grid-column: span 4; }
+  .app { padding: 14px 14px 32px; }
+}
+@media (max-width: 380px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+  .widget[data-size="md"],
+  .widget[data-size="lg"] { grid-column: span 3; }
+  .widget[data-size="sm"] { grid-column: span 3; }
+}
+
+/* ------------------------------ modo minimal ------------------------------ */
+
+.minimal {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  text-align: center;
+  padding: 40px 20px 80px;
+}
+html.is-minimal .minimal { display: flex; }
+html.is-minimal .grid,
+html.is-minimal .grid-empty { display: none; }
+
+.minimal__time {
+  font-size: clamp(64px, 14vw, 168px);
+  font-weight: 200;
+  letter-spacing: -.04em;
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+}
+.minimal__date { color: var(--text-muted); font-size: 16px; }
+
+.minimal__goal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(680px, 90vw);
+}
+.minimal__goal-input {
+  flex: 1;
+  border: 0;
+  border-bottom: 1px dashed var(--border-strong);
+  background: transparent;
+  text-align: center;
+  font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 300;
+  padding: 6px 4px;
+  outline: none;
+  color: var(--text);
+}
+.minimal__goal-input::placeholder { color: var(--text-faint); }
+.minimal__goal-input:focus { border-bottom-color: var(--accent); }
+.minimal__goal-check { color: var(--text-faint); }
+.minimal__goal.is-done .minimal__goal-input { text-decoration: line-through; opacity: .55; }
+.minimal__goal.is-done .minimal__goal-check { color: var(--ok); }
+
+.minimal__quote {
+  max-width: min(620px, 88vw);
+  color: var(--text-muted);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.6;
+}
+.minimal__quote cite { display: block; margin-top: 6px; font-style: normal; font-size: 13px; color: var(--text-faint); }
+
+/* --------------------------------- toast --------------------------------- */
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1200;
+  pointer-events: none;
+}
+.toast {
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-lg);
+  font-size: 14px;
+  animation: toast-in .22s var(--ease);
+  pointer-events: auto;
+}
+.toast--error { color: var(--danger); border-color: rgba(214, 69, 91, .4); }
+.toast--ok { color: var(--ok); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ============================== cabecera fija ==============================
+   Reloj centrado sobre una lámina de cristal + buscador que se expande. */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: clamp(26px, 7vh, 74px) 0 clamp(20px, 4vh, 38px);
+  text-align: center;
+}
+html.is-minimal .hero { display: none; }
+
+/* El reloj no vive en una caja: son las propias cifras las que son de cristal.
+   Tres capas sobre la misma silueta de los glifos:
+     1. relleno translúcido en degradado -> el fondo se ve A TRAVÉS de la letra,
+        más claro arriba (donde da la luz) y más denso abajo.
+     2. `drop-shadow` blanco muy corto arriba -> canto biselado que brilla.
+     3. `drop-shadow` oscuro y amplio -> la cifra flota sobre el fondo.
+   `drop-shadow` sigue el alfa del glifo, no su caja: por eso funciona aquí y
+   un `box-shadow` no serviría. */
+.hero__clock {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero__date {
+  font-family: var(--clock-font);
+  font-size: clamp(13px, 1.3vw, 16px);
+  font-weight: 500;
+  letter-spacing: .012em;
+  /* A 14 px un degradado marcado solo ensucia: aquí el cristal es un matiz. */
+  background: linear-gradient(180deg,
+    rgba(var(--glass-text-rgb), calc(.42 + .56 * var(--clock-solid))) 0%,
+    rgba(var(--glass-text-rgb), calc(.34 + .48 * var(--clock-solid))) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 3px var(--glass-text-shadow));
+}
+.hero__date::first-letter { text-transform: uppercase; }
+
+.hero__time {
+  font-family: var(--clock-font);
+  font-size: clamp(58px, 10.5vw, 126px);
+  font-weight: var(--clock-weight);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  margin-top: 4px;
+
+  /* El alfa del relleno se modula con --clock-solid: a 1 la cifra es casi
+     opaca; a 0 es cristal casi puro y el fondo la atraviesa entera. */
+  background: linear-gradient(180deg,
+    rgba(var(--glass-text-rgb), calc(.30 + .68 * var(--clock-solid))) 0%,
+    rgba(var(--glass-text-rgb), calc(.24 + .60 * var(--clock-solid))) 55%,
+    rgba(var(--glass-text-rgb), calc(.18 + .48 * var(--clock-solid))) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  /* Una sola sombra, corta y suave, para dar grosor. Nada de cantos duros ni de
+     sombras claras: un `drop-shadow` blanco sobre fondo claro no da relieve,
+     da halo, y una línea de 1 px bajo el glifo se lee como un subrayado. */
+  filter: drop-shadow(0 2px 6px var(--glass-text-shadow));
+}
+
+/*
+ * Los segundos necesitan SU PROPIO recorte de fondo. Al llevar opacidad o
+ * cualquier propiedad que cree capa, el `background-clip: text` del padre deja
+ * de alcanzarlos y, como el relleno va en transparente, se vuelven invisibles.
+ */
+.hero__time .hero__seconds {
+  font-size: .40em;
+  font-weight: calc(var(--clock-weight) + 50);
+  letter-spacing: -.01em;
+  margin-left: .12em;
+  vertical-align: baseline;
+  background: linear-gradient(180deg,
+    rgba(var(--glass-text-rgb), calc(.24 + .52 * var(--clock-solid))) 0%,
+    rgba(var(--glass-text-rgb), calc(.18 + .40 * var(--clock-solid))) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Refracción: dentro de los glifos se pinta una copia diminuta del fondo,
+   estirada hasta cubrir la ventana. Con `background-attachment: fixed` esa copia
+   se ancla al viewport igual que el fondo real, así que lo que se ve a través de
+   la cifra coincide con lo que hay detrás — pero difuminado, como el cristal
+   grueso. El degradado va encima para conservar el brillo del canto. */
+html.has-refraction .hero__time {
+  background-image:
+    linear-gradient(180deg,
+      rgba(var(--glass-text-rgb), calc(.30 + .68 * var(--clock-solid))) 0%,
+      rgba(var(--glass-text-rgb), calc(.24 + .60 * var(--clock-solid))) 55%,
+      rgba(var(--glass-text-rgb), calc(.18 + .48 * var(--clock-solid))) 100%),
+    var(--wallpaper-proxy);
+  background-size: auto, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: scroll, fixed;
+}
+html.has-refraction .hero__time .hero__seconds,
+html.has-refraction .hero__date {
+  background-image:
+    linear-gradient(180deg,
+      rgba(var(--glass-text-rgb), calc(.28 + .54 * var(--clock-solid))) 0%,
+      rgba(var(--glass-text-rgb), calc(.22 + .44 * var(--clock-solid))) 100%),
+    var(--wallpaper-proxy);
+  background-size: auto, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: scroll, fixed;
+}
+
+/* ---------------------------- buscador ---------------------------- */
+
+.hero__searchwrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.hero__search {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 210px;
+  height: 40px;
+  padding: 0 13px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-edge-soft);
+  background: rgba(var(--glass-tint), calc(var(--glass-alpha) * .8));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow);
+  cursor: text;
+  /* La expansión es la animación principal de la página: que se note suave. */
+  transition: width .34s var(--ease-spring), height .28s var(--ease),
+              border-radius .28s var(--ease), box-shadow .24s var(--ease),
+              gap .28s var(--ease), padding .28s var(--ease);
+}
+.hero__search.is-open {
+  width: min(600px, 92vw);
+  height: 54px;
+  padding: 0 18px;
+  gap: 12px;
+  border-radius: 27px;
+  border-color: rgba(var(--accent-rgb), .45);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    0 0 0 4px rgba(var(--accent-rgb), .16),
+    var(--shadow-lg);
+}
+
+.hero__search-icon {
+  display: flex;
+  color: var(--text-muted);
+  flex: none;
+  transition: color .2s var(--ease);
+}
+.hero__search.is-open .hero__search-icon { color: var(--accent); }
+
+.hero__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  color: var(--text);
+  padding-left: 9px;
+  transition: font-size .28s var(--ease);
+}
+.hero__search.is-open .hero__input { font-size: 17px; padding-left: 0; }
+.hero__input::placeholder { color: transparent; }
+
+.hero__kbd {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-faint);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-edge-soft);
+  background: rgba(127, 127, 127, .12);
+  flex: none;
+  white-space: nowrap;
+}
+.hero__search.is-open .hero__kbd { display: none; }
+
+.hero__clear {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border: 0; border-radius: 50%;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: none;
+}
+.hero__search.is-open.has-text .hero__clear { display: flex; }
+
+.hero__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, 92vw);
+  z-index: 700;
+  max-height: min(52vh, 460px);
+  overflow: auto;
+  padding: 6px;
+  border-radius: 20px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(180%);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+  animation: pop .16s var(--ease);
+}
+.hero__panel[hidden] { display: none; }
+
+@media (max-width: 700px) {
+  .hero { padding-top: 24px; gap: 16px; }
+  .hero__search { width: 180px; height: 38px; }
+  .hero__search.is-open { height: 50px; }
+}
