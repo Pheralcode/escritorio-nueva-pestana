@@ -64,11 +64,11 @@ export async function importFromText(text) {
   return clean;
 }
 
-export function pickFile() {
+export function pickFile(accept = 'application/json,.json') {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'application/json,.json';
+    input.accept = accept;
     input.addEventListener('change', () => resolve(input.files?.[0] || null));
     // Safari/WebKit exige que el input esté en el DOM para abrir el diálogo.
     input.style.display = 'none';
@@ -85,4 +85,12 @@ export function readFile(file) {
     fr.onerror = () => reject(fr.error || new Error('No se pudo leer el archivo.'));
     fr.readAsText(file);
   });
+}
+
+/** Marcadores de un export HTML de Chrome/Edge/Safari/Orion (formato Netscape). */
+export function parseBookmarksHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return [...doc.querySelectorAll('a[href]')]
+    .map((a) => ({ title: a.textContent.trim(), url: a.href }))
+    .filter((b) => /^https?:/.test(b.url));
 }

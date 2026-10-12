@@ -17,7 +17,7 @@ import { capabilities, storage } from '../core/compat.js';
 import { faviconEl } from '../core/favicon.js';
 import { setMinimal } from './minimal.js';
 import * as dock from './dock.js';
-import { starterState } from '../core/state.js';
+import { starterState, uid } from '../core/state.js';
 
 let panel = null;
 let overlay = null;
@@ -508,9 +508,19 @@ function sectionLinks() {
 
   if (!sync.isSupported()) {
     wrap.append(h('div', { class: 'notice' },
-      h('p', {}, 'Este navegador no expone la API de marcadores a las extensiones.'),
-      h('p', { class: 'faint' }, 'El escritorio sigue funcionando: tus accesos se guardan localmente. '
-        + 'En Orion esto depende de la versión y de la capa de compatibilidad de extensiones.'),
+      h('p', {}, 'Aquí no se puede leer tu barra de marcadores (solo lo permite una extensión).'),
+      h('p', { class: 'faint' }, 'Exporta tus marcadores desde el navegador (archivo HTML) e impórtalos: '
+        + 'se añaden como accesos, hasta 48.'),
+      h('button', { class: 'btn', type: 'button', onClick: async () => {
+        const file = await backup.pickFile('.html,text/html');
+        if (!file) return;
+        const have = new Set(store.getState().shortcuts.map((x) => x.url));
+        const found = backup.parseBookmarksHtml(await backup.readFile(file))
+          .filter((b) => !have.has(b.url)).slice(0, 48);
+        store.update((st) => { st.shortcuts = [...st.shortcuts, ...found.map((b) => ({ id: uid('sc'), ...b }))]; });
+        store.bus.emit('shortcuts-updated');
+        store.bus.emit('toast', { message: `${found.length} marcadores importados.`, kind: 'ok' });
+      } }, icon('upload', 16), 'Importar marcadores (HTML)'),
     ));
   } else {
     const row = toggleRow('Sincronizar accesos con marcadores', s.bookmarksSync, async (on, sw) => {

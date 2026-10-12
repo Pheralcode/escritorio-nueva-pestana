@@ -84,23 +84,40 @@ export function call(thisArg, fn, ...args) {
  * storage.local (única fuente de verdad; nunca storage.sync)
  * ------------------------------------------------------------------ */
 
-/** Fallback en memoria + localStorage para desarrollo fuera de la extensión. */
-const memoryStore = {
-  async get(keys) {
+/**
+ * Respaldo fuera de una extensión (p. ej. GitHub Pages): IndexedDB, no
+ * localStorage. localStorage corta en ~5 MB y un fondo de pantalla ya no cabe;
+ * IndexedDB admite cientos de MB.
+ * ponytail: sin migración desde localStorage; solo aplica a la versión web.
+ */
+const openDb = () => new Promise((res, rej) => {
+  const r = indexedDB.open('nueva-pestana', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('kv');
+  r.onsuccess = () => res(r.result);
+  r.onerror = () => rej(r.error);
+});
+
+const idbTx = async (mode, fn) => {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = db.transaction('kv', mode);
     const out = {};
-    const list = keys == null ? Object.keys(localStorage).filter(k => k.startsWith('pt.')) : [].concat(keys);
-    for (const k of list) {
-      const raw = localStorage.getItem(k);
-      if (raw != null) { try { out[k] = JSON.parse(raw); } catch { /* ignorar */ } }
-    }
-    return out;
-  },
-  async set(obj) {
-    for (const [k, v] of Object.entries(obj)) localStorage.setItem(k, JSON.stringify(v));
-  },
-  async remove(keys) {
-    for (const k of [].concat(keys)) localStorage.removeItem(k);
-  },
+    fn(t.objectStore('kv'), out);
+    t.oncomplete = () => resolve(out);
+    t.onerror = () => reject(t.error);
+  });
+};
+
+const memoryStore = {
+  get: (keys) => idbTx('readonly', (s, out) => {
+    const read = (list) => list.forEach((k) => {
+      s.get(k).onsuccess = (e) => { if (e.target.result !== undefined) out[k] = e.target.result; };
+    });
+    if (keys == null) s.getAllKeys().onsuccess = (e) => read(e.target.result);
+    else read([].concat(keys));
+  }),
+  set: (obj) => idbTx('readwrite', (s) => Object.entries(obj).forEach(([k, v]) => s.put(v, k))).then(() => {}),
+  remove: (keys) => idbTx('readwrite', (s) => [].concat(keys).forEach((k) => s.delete(k))).then(() => {}),
 };
 
 export const storage = {
